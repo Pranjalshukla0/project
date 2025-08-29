@@ -37,9 +37,40 @@ const capturePhoto = async () => {
         logger: (m) => console.log(m),
       }
     ).then(({ data: { text } }) => {
-      setOcrText(text);
-      setIsOcrLoading(false);
-    }).catch(err => {
+  let extracted = "";
+  const upperText = text.toUpperCase();
+
+  // PAN Card check
+  if (upperText.includes("INCOME TAX") || panRegex.pan.test(upperText)) {
+    const name = panRegex.name.exec(upperText)?.[1]?.trim() || "Not found";
+    const dob = panRegex.dob.exec(upperText)?.[0] || "Not found";
+    const pan = panRegex.pan.exec(upperText)?.[0] || "Not found";
+
+    extracted = `Document Type: PAN Card\nName: ${name}\nDOB: ${dob}\nPAN: ${pan}`;
+  }
+
+  // Aadhaar Card check
+  else if (aadhaarRegex.aadhaar.test(upperText)) {
+    const nameLine = upperText
+      .split("\n")
+      .find(line => aadhaarRegex.name.test(line)) || "Not found";
+
+    const dob = aadhaarRegex.dob.exec(upperText)?.[0] || "Not found";
+    const gender = aadhaarRegex.gender.exec(upperText)?.[0] || "Not found";
+    const aadhaar = aadhaarRegex.aadhaar.exec(upperText)?.[0] || "Not found";
+
+    extracted = `Document Type: Aadhaar Card\nName: ${nameLine}\nDOB: ${dob}\nGender: ${gender}\nAadhaar No: ${aadhaar}`;
+  }
+
+  // Not recognized
+  else {
+    extracted = "Could not identify document type or extract data properly.";
+  }
+
+  setOcrText(extracted);
+  setIsOcrLoading(false);
+})
+.catch(err => {
       console.error("OCR error:", err);
       setOcrText("Failed to extract text.");
       setIsOcrLoading(false);
