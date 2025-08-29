@@ -42,6 +42,7 @@ function App() {
             screenshotFormat="image/jpeg"
             width={540}
             height={380}
+             className="webcam"
             videoConstraints={videoConstraints}
           />
           <button className="capture-btn" onClick={capturePhoto}>
