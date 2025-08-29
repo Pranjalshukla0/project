@@ -101,6 +101,8 @@ function App() {
             ref={webcamRef}
             screenshotFormat="image/png"
             className="webcam"
+              width={360}
+  height={480}
             videoConstraints={videoConstraints}
             mirrored={captureType === "selfie"}
             onUserMediaError={(err) => {
