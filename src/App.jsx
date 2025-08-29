@@ -11,7 +11,8 @@ function App() {
   const videoConstraints = {
     width: 640,
     height: 480,
-    facingMode: captureType === "selfie" ? "user" : "environment",
+    facingMode:
+      captureType === "selfie" ? { exact: "user" } : { exact: "environment" },
   };
 
   const capturePhoto = () => {
@@ -30,7 +31,9 @@ function App() {
     <div className="App">
       <h1>Camera Capture App</h1>
       <div className="button-container">
-        <button onClick={() => handleButtonClick("document")}>Verify Document</button>
+        <button onClick={() => handleButtonClick("document")}>
+          Verify Document
+        </button>
         <button onClick={() => handleButtonClick("selfie")}>Selfie</button>
       </div>
 
@@ -42,10 +45,17 @@ function App() {
             screenshotFormat="image/jpeg"
             width={540}
             height={380}
-             className="webcam"
-               playsInline
+            className="webcam"
+            playsInline
             videoConstraints={videoConstraints}
-             mirrored={captureType === "selfie" ? false : false}
+            mirrored={false}
+            onUserMediaError={(err) => {
+              console.error("Camera access denied:", err);
+              alert(
+                "Camera permission was denied. Please allow access to use this feature."
+              );
+              setShowCamera(false); // hide camera UI if blocked
+            }}
           />
           <button className="capture-btn" onClick={capturePhoto}>
             Capture {captureType}
