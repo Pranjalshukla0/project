@@ -25,11 +25,12 @@ function App() {
   const [ocrText, setOcrText] = useState("");
   const [isOcrLoading, setIsOcrLoading] = useState(false);
 
-  const videoConstraints = {
-    width: 840,
-    height: 460,
-    facingMode: captureType === "selfie" ? "user" : "environment"
-  };
+ const videoConstraints = {
+  width: 720,
+  height: 960,
+  facingMode: captureType === "selfie" ? "user" : "environment"
+};
+
 
   const capturePhoto = async () => {
     const imageSrc = webcamRef.current.getScreenshot();
