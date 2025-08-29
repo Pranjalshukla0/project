@@ -7,8 +7,9 @@ const aadhaarRegex = {
   aadhaar: /\d{4}\s\d{4}\s\d{4}/,
   dob: /(DOB|D\.O\.B\.|Year of Birth)[:\s]*\d{4}/i,
   gender: /(MALE|FEMALE|TRANSGENDER)/i,
-  name: /^[A-Z][a-zA-Z ]+$/m
-};
+  name: /([A-Z][a-z]+\s){1,3}/g
+}
+
 
 const panRegex = {
   pan: /[A-Z]{5}[0-9]{4}[A-Z]{1}/,
