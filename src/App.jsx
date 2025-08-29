@@ -11,12 +11,12 @@ function App() {
   const [errorMessage, setErrorMessage] = useState("");
  const [ocrText, setOcrText] = useState(""); // to hold extracted text
 const [isOcrLoading, setIsOcrLoading] = useState(false); // loader
-  const videoConstraints = {
-    width: 640,
-    height: 480,
-    facingMode:
-      captureType === "selfie" ? "user"  : "environment" ,
-  };
+const videoConstraints = {
+  width: { ideal: 1280 },
+  height: { ideal: 720 },
+  facingMode: captureType === "selfie" ? "user" : "environment",
+};
+
 
 const capturePhoto = async () => {
   const imageSrc = webcamRef.current.getScreenshot();
@@ -30,7 +30,7 @@ const capturePhoto = async () => {
     // Run OCR
     Tesseract.recognize(
       imageSrc,
-      "eng",
+      "eng+hin",
       {
         logger: (m) => console.log(m),
       }
