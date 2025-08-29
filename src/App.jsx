@@ -55,17 +55,22 @@ const capturePhoto = async () => {
 
   if (upperText.includes("INCOME TAX") || panRegex.pan.test(upperText)) {
     // PAN Card
+     const name = panRegex.name.exec(upperText)?.[1]?.trim() || "Not found";
+      const dob = panRegex.dob.exec(upperText)?.[0] || "Not found";
     const pan = panRegex.pan.exec(upperText)?.[0] || "Not found";
-    const dob = panRegex.dob.exec(upperText)?.[0] || "Not found";
-    const name = panRegex.name.exec(upperText)?.[1]?.trim() || "Not found";
+   
+   
 
     extracted = `Document Type: PAN Card\nName: ${name}\nDOB: ${dob}\nPAN: ${pan}`;
   } else if (aadhaarRegex.aadhaar.test(upperText)) {
     // Aadhaar Card
+     const name = upperText.split("\n").find(line => aadhaarRegex.name.test(line)) || "Not found";
+      const dob = aadhaarRegex.dob.exec(upperText)?.[0] || "Not found";
+      const gender = aadhaarRegex.gender.exec(upperText)?.[0] || "Not found";
     const aadhaar = aadhaarRegex.aadhaar.exec(upperText)?.[0] || "Not found";
-    const dob = aadhaarRegex.dob.exec(upperText)?.[0] || "Not found";
-    const gender = aadhaarRegex.gender.exec(upperText)?.[0] || "Not found";
-    const name = upperText.split("\n").find(line => aadhaarRegex.name.test(line)) || "Not found";
+   
+    
+   
 
     extracted = `Document Type: Aadhaar Card\nName: ${name}\nDOB: ${dob}\nGender: ${gender}\nAadhaar No: ${aadhaar}`;
   } else {
@@ -103,7 +108,7 @@ const capturePhoto = async () => {
           <Webcam
             audio={false}
             ref={webcamRef}
-            screenshotFormat="image/jpeg"
+            screenshotFormat="image/png"
             width={540}
             height={380}
             className="webcam"
