@@ -12,7 +12,7 @@ function App() {
     width: 640,
     height: 480,
     facingMode:
-      captureType === "selfie" ? { exact: "user" } : { exact: "environment" },
+      captureType === "selfie" ? "user"  : "environment" ,
   };
 
   const capturePhoto = () => {
