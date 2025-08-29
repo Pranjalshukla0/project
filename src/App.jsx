@@ -1,6 +1,7 @@
 import React, { useRef, useState } from "react";
 import Webcam from "react-webcam";
 import "./App.css";
+import Tesseract from "tesseract.js";
 
 function App() {
   const webcamRef = useRef(null);
@@ -8,7 +9,8 @@ function App() {
   const [captureType, setCaptureType] = useState("");
   const [capturedImage, setCapturedImage] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
-
+ const [ocrText, setOcrText] = useState(""); // to hold extracted text
+const [isOcrLoading, setIsOcrLoading] = useState(false); // loader
   const videoConstraints = {
     width: 640,
     height: 480,
@@ -16,11 +18,32 @@ function App() {
       captureType === "selfie" ? "user"  : "environment" ,
   };
 
-  const capturePhoto = () => {
-    const imageSrc = webcamRef.current.getScreenshot();
-    setCapturedImage(imageSrc);
-    setShowCamera(false);
-  };
+const capturePhoto = async () => {
+  const imageSrc = webcamRef.current.getScreenshot();
+  setCapturedImage(imageSrc);
+  setShowCamera(false);
+
+  if (captureType === "document") {
+    setIsOcrLoading(true);
+    setOcrText("");
+
+    // Run OCR
+    Tesseract.recognize(
+      imageSrc,
+      "eng",
+      {
+        logger: (m) => console.log(m),
+      }
+    ).then(({ data: { text } }) => {
+      setOcrText(text);
+      setIsOcrLoading(false);
+    }).catch(err => {
+      console.error("OCR error:", err);
+      setOcrText("Failed to extract text.");
+      setIsOcrLoading(false);
+    });
+  }
+};
 
   const handleButtonClick = (type) => {
     setCaptureType(type);
@@ -49,7 +72,8 @@ function App() {
             className="webcam"
             playsInline
             videoConstraints={videoConstraints}
-           mirrored={true}
+           mirrored={captureType === "selfie"}
+
             onUserMediaError={(err) => {
               console.error("Camera access denied:", err);
              setErrorMessage("Camera permission was denied. Please allow access to use this feature.");
@@ -68,6 +92,22 @@ function App() {
           <img src={capturedImage} alt="Captured" />
         </div>
       )}
+      {captureType === "document" && capturedImage && (
+  <div className="ocr-output">
+    <h3>Extracted Text:</h3>
+    {isOcrLoading ? (
+      <p>Processing...</p>
+    ) : (
+      <textarea
+        value={ocrText}
+        readOnly
+        rows={10}
+        style={{ width: "100%", maxWidth: "500px" }}
+      />
+    )}
+  </div>
+)}
+
       {errorMessage && (
   <div className="error-modal">
     <div className="error-box">
