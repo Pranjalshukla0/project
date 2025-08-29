@@ -3,18 +3,7 @@ import Webcam from "react-webcam";
 import "./App.css";
 import Tesseract from "tesseract.js";
 
-const aadhaarRegex = {
-  aadhaar: /\d{4}\s\d{4}\s\d{4}/,
-  dob: /(DOB|D\.O\.B\.|Year of Birth)[:\s]*\d{4}/i,
-  gender: /(MALE|FEMALE|TRANSGENDER)/i,
-  name: /([A-Z][a-z]+\s){1,3}/g,
-};
 
-const panRegex = {
-  pan: /[A-Z]{5}[0-9]{4}[A-Z]{1}/,
-  dob: /\d{2}\/\d{2}\/\d{4}/,
-  name: /(?<=INCOME TAX DEPARTMENT\s)([A-Z ]+)/,
-};
 
 function App() {
   const webcamRef = useRef(null);
@@ -22,76 +11,41 @@ function App() {
   const [captureType, setCaptureType] = useState("");
   const [capturedImage, setCapturedImage] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
-  const [ocrText, setOcrText] = useState(""); // to hold extracted text
-  const [isOcrLoading, setIsOcrLoading] = useState(false); // loader
-  const videoConstraints = {
-    width: { ideal: 640 },
-    height: { ideal: 480 },
-    facingMode: captureType === "selfie" ? "user" : "environment",
-  };
+ const [ocrText, setOcrText] = useState(""); // to hold extracted text
+const [isOcrLoading, setIsOcrLoading] = useState(false); // loader
+const videoConstraints = {
+  width: { ideal: 640 },
+  height: { ideal: 480 },
+  facingMode: captureType === "selfie" ? "user" : "environment",
+};
 
-  const capturePhoto = async () => {
-    const imageSrc = webcamRef.current.getScreenshot();
-    setCapturedImage(imageSrc);
-    setShowCamera(false);
 
-    if (captureType === "document") {
-      setIsOcrLoading(true);
-      setOcrText("");
+const capturePhoto = async () => {
+  const imageSrc = webcamRef.current.getScreenshot();
+  setCapturedImage(imageSrc);
+  setShowCamera(false);
 
-      // Run OCR
-      Tesseract.recognize(imageSrc, "eng+hin", {
+  if (captureType === "document") {
+    setIsOcrLoading(true);
+    setOcrText("");
+
+    // Run OCR
+    Tesseract.recognize(
+      imageSrc,
+      "eng+hin",
+      {
         logger: (m) => console.log(m),
-      })
-        .then(({ data: { text } }) => {
-          let extracted = "";
-
-          const originalText = text;
-          const upperText = text.toUpperCase();
-
-          if (
-            upperText.includes("INCOME TAX") ||
-            panRegex.pan.test(upperText)
-          ) {
-            // PAN Card
-            const name =
-              panRegex.name.exec(upperText)?.[1]?.trim() || "Not found";
-            const dob = panRegex.dob.exec(upperText)?.[0] || "Not found";
-            const pan = panRegex.pan.exec(upperText)?.[0] || "Not found";
-
-            extracted = `Document Type: PAN Card\nName: ${name}\nDOB: ${dob}\nPAN: ${pan}`;
-          } else if (aadhaarRegex.aadhaar.test(upperText)) {
-            // Aadhaar Card
-            const lines = originalText
-              .split("\n")
-              .map((line) => line.trim())
-              .filter(Boolean);
-
-            const nameLine =
-              lines.find((line) => /^[A-Za-z ]+$/.test(line)) || "Not found";
-            const dobMatch =
-              aadhaarRegex.dob.exec(originalText)?.[0] || "Not found";
-            const genderMatch =
-              aadhaarRegex.gender.exec(upperText)?.[0] || "Not found";
-            const aadhaarMatch =
-              aadhaarRegex.aadhaar.exec(upperText)?.[0] || "Not found";
-
-            extracted = `Document Type: Aadhaar Card\nName: ${nameLine}\nDOB: ${dobMatch}\nGender: ${genderMatch}\nAadhaar No: ${aadhaarMatch}`;
-          } else {
-            extracted =
-              "Could not identify document type or extract data properly.";
-          }
-
-          setOcrText(extracted);
-          setIsOcrLoading(false);
-        })
-        .catch((err) => {
-          console.error("OCR error:", err);
-          setOcrText("Failed to extract text.");
-          setIsOcrLoading(false);
-        });
-    }
-  };
+      }
+    ).then(({ data: { text } }) => {
+      setOcrText(text);
+      setIsOcrLoading(false);
+    }).catch(err => {
+      console.error("OCR error:", err);
+      setOcrText("Failed to extract text.");
+      setIsOcrLoading(false);
+    });
+  }
+};
 
   const handleButtonClick = (type) => {
     setCaptureType(type);
@@ -111,22 +65,20 @@ function App() {
 
       {showCamera && (
         <div className="camera-container">
-          <Webcam
-            audio={false}
-            ref={webcamRef}
-            screenshotFormat="image/png"
-            className="webcam"
-            playsInline
-            videoConstraints={videoConstraints}
-            mirrored={captureType === "selfie"}
-            onUserMediaError={(err) => {
-              console.error("Camera access denied:", err);
-              setErrorMessage(
-                "Camera permission was denied. Please allow access to use this feature."
-              );
-              setShowCamera(false);
-            }}
-          />
+         <Webcam
+  audio={false}
+  ref={webcamRef}
+  screenshotFormat="image/png"
+  className="webcam"
+  playsInline
+  videoConstraints={videoConstraints}
+  mirrored={captureType === "selfie"}
+  onUserMediaError={(err) => {
+    console.error("Camera access denied:", err);
+    setErrorMessage("Camera permission was denied. Please allow access to use this feature.");
+    setShowCamera(false);
+  }}
+/>
 
           <button className="capture-btn" onClick={capturePhoto}>
             Capture {captureType}
@@ -141,29 +93,30 @@ function App() {
         </div>
       )}
       {captureType === "document" && capturedImage && (
-        <div className="ocr-output">
-          <h3>Extracted Text:</h3>
-          {isOcrLoading ? (
-            <p>Processing...</p>
-          ) : (
-            <textarea
-              value={ocrText}
-              readOnly
-              rows={10}
-              style={{ width: "100%", maxWidth: "500px" }}
-            />
-          )}
-        </div>
-      )}
+  <div className="ocr-output">
+    <h3>Extracted Text:</h3>
+    {isOcrLoading ? (
+      <p>Processing...</p>
+    ) : (
+      <textarea
+        value={ocrText}
+        readOnly
+        rows={10}
+        style={{ width: "100%", maxWidth: "500px" }}
+      />
+    )}
+  </div>
+)}
 
       {errorMessage && (
-        <div className="error-modal">
-          <div className="error-box">
-            <p>{errorMessage}</p>
-            <button onClick={() => setErrorMessage("")}>Close</button>
-          </div>
-        </div>
-      )}
+  <div className="error-modal">
+    <div className="error-box">
+      <p>{errorMessage}</p>
+      <button onClick={() => setErrorMessage("")}>Close</button>
+    </div>
+  </div>
+)}
+
     </div>
   );
 }
