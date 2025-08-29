@@ -26,8 +26,8 @@ function App() {
   const [isOcrLoading, setIsOcrLoading] = useState(false);
 
   const videoConstraints = {
-    width: 640,
-    height: 360,
+    width: 840,
+    height: 460,
     facingMode: captureType === "selfie" ? "user" : "environment"
   };
 
