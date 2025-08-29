@@ -68,43 +68,14 @@ function App() {
           <img src={capturedImage} alt="Captured" />
         </div>
       )}
-      {/* {errorMessage && (
+      {errorMessage && (
   <div className="error-modal">
     <div className="error-box">
       <p>{errorMessage}</p>
       <button onClick={() => setErrorMessage("")}>Close</button>
     </div>
   </div>
-)} */}
-
-{errorMessage && (
-  <div className="error-modal">
-    <div className="error-box">
-      <p>{errorMessage}</p>
-      <p style={{ marginTop: "1rem" }}>
-        Please go to your browser settings and allow camera access.
-        <br />
-        If you're using Chrome:
-        <ul style={{ textAlign: "left", margin: "0.5rem auto", maxWidth: "300px" }}>
-          <li>Tap the 🔒 lock icon in the address bar</li>
-          <li>Find "Camera" and set it to "Allow"</li>
-          <li>Reload the page</li>
-        </ul>
-      </p>
-      <button
-        className="retry-btn"
-        onClick={() => {
-          // Optionally try re-requesting permission
-          setErrorMessage("");
-          setShowCamera(false); // Keeps the state clean
-        }}
-      >
-        I’ve Allowed Access – Retry
-      </button>
-    </div>
-  </div>
 )}
-
 
     </div>
   );
