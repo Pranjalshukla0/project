@@ -102,8 +102,8 @@ const videoConstraints = {
             ref={webcamRef}
             screenshotFormat="image/png"
             className="webcam"
-              width={360}
-  height={480}
+              width={460}
+  height={680}
             videoConstraints={videoConstraints}
             mirrored={captureType === "selfie"}
             onUserMediaError={(err) => {
