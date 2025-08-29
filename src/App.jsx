@@ -7,13 +7,13 @@ const aadhaarRegex = {
   aadhaar: /\d{4}\s\d{4}\s\d{4}/,
   dob: /(DOB|D\.O\.B\.|Year of Birth)[:\s]*\d{4}/i,
   gender: /(MALE|FEMALE|TRANSGENDER)/i,
-  name: /^[A-Z][A-Z ]{3,}$/m
+  name: /^[A-Z][A-Z ]{3,}$/m,
 };
 
 const panRegex = {
   pan: /[A-Z]{5}[0-9]{4}[A-Z]{1}/,
   dob: /\d{2}\/\d{2}\/\d{4}/,
-  name: /(?<=INCOME TAX DEPARTMENT\s)([A-Z ]+)/ // or customize
+  name: /(?<=INCOME TAX DEPARTMENT\s)([A-Z ]+)/, // or customize
 };
 
 function App() {
@@ -25,13 +25,11 @@ function App() {
   const [ocrText, setOcrText] = useState("");
   const [isOcrLoading, setIsOcrLoading] = useState(false);
 
-const videoConstraints = {
-  width: 960,      // higher clarity than 720
-  height: 1280,
-  facingMode: captureType === "selfie" ? "user" : "environment"
-};
-
-
+  const videoConstraints = {
+    width: { ideal: 1280 },
+    height: { ideal: 720 },
+    facingMode: captureType === "selfie" ? "user" : "environment",
+  };
 
   const capturePhoto = async () => {
     const imageSrc = webcamRef.current.getScreenshot();
@@ -43,31 +41,42 @@ const videoConstraints = {
       setOcrText("");
 
       Tesseract.recognize(imageSrc, "eng+hin", {
-        logger: (m) => console.log(m)
+        logger: (m) => console.log(m),
       })
         .then(({ data: { text } }) => {
           let extracted = "";
           const upperText = text.toUpperCase();
 
           // PAN Card
-          if (upperText.includes("INCOME TAX") || panRegex.pan.test(upperText)) {
-            const name = panRegex.name.exec(upperText)?.[1]?.trim() || "Not found";
+          if (
+            upperText.includes("INCOME TAX") ||
+            panRegex.pan.test(upperText)
+          ) {
+            const name =
+              panRegex.name.exec(upperText)?.[1]?.trim() || "Not found";
             const dob = panRegex.dob.exec(upperText)?.[0] || "Not found";
             const pan = panRegex.pan.exec(upperText)?.[0] || "Not found";
             extracted = `Document Type: PAN Card\nName: ${name}\nDOB: ${dob}\nPAN: ${pan}`;
           }
           // Aadhaar Card
           else if (aadhaarRegex.aadhaar.test(upperText)) {
-            const lines = upperText.split("\n").map((l) => l.trim()).filter(Boolean);
-            const nameLine = lines.find((line) => aadhaarRegex.name.test(line)) || "Not found";
+            const lines = upperText
+              .split("\n")
+              .map((l) => l.trim())
+              .filter(Boolean);
+            const nameLine =
+              lines.find((line) => aadhaarRegex.name.test(line)) || "Not found";
             const dob = aadhaarRegex.dob.exec(upperText)?.[0] || "Not found";
-            const gender = aadhaarRegex.gender.exec(upperText)?.[0] || "Not found";
-            const aadhaar = aadhaarRegex.aadhaar.exec(upperText)?.[0] || "Not found";
+            const gender =
+              aadhaarRegex.gender.exec(upperText)?.[0] || "Not found";
+            const aadhaar =
+              aadhaarRegex.aadhaar.exec(upperText)?.[0] || "Not found";
             extracted = `Document Type: Aadhaar Card\nName: ${nameLine}\nDOB: ${dob}\nGender: ${gender}\nAadhaar No: ${aadhaar}`;
           }
           // Unknown
           else {
-            extracted = "Could not identify document type or extract data properly.";
+            extracted =
+              "Could not identify document type or extract data properly.";
           }
 
           setOcrText(extracted);
@@ -91,18 +100,22 @@ const videoConstraints = {
     <div className="App">
       <h1>Camera Capture App</h1>
       <div className="button-container">
-        <button onClick={() => handleButtonClick("document")}>Verify Document</button>
+        <button onClick={() => handleButtonClick("document")}>
+          Verify Document
+        </button>
         <button onClick={() => handleButtonClick("selfie")}>Selfie</button>
       </div>
 
       {showCamera && (
         <div className="camera-container">
-          <Webcam
+               <Webcam
             audio={false}
             ref={webcamRef}
             screenshotFormat="image/png"
+            width={540}
+            height={380}
             className="webcam"
-            
+            playsInline
             videoConstraints={videoConstraints}
             mirrored={captureType === "selfie"}
             onUserMediaError={(err) => {
