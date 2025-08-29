@@ -36,8 +36,19 @@ button:hover {
 }
 
 .camera-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   margin-top: 1rem;
+  width: 100%;
+  max-width: 600px;
+  aspect-ratio: 4 / 3; /* Keep camera frame stable */
+  background: black;
+  overflow: hidden;
+  position: relative;
 }
+
 
 .capture-btn {
   margin-top: 1rem;
