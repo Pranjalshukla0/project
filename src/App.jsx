@@ -7,6 +7,7 @@ function App() {
   const [showCamera, setShowCamera] = useState(false);
   const [captureType, setCaptureType] = useState("");
   const [capturedImage, setCapturedImage] = useState(null);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const videoConstraints = {
     width: 640,
@@ -48,12 +49,10 @@ function App() {
             className="webcam"
             playsInline
             videoConstraints={videoConstraints}
-            mirrored={false}
+           mirrored={true}
             onUserMediaError={(err) => {
               console.error("Camera access denied:", err);
-              alert(
-                "Camera permission was denied. Please allow access to use this feature."
-              );
+             setErrorMessage("Camera permission was denied. Please allow access to use this feature.");
               setShowCamera(false); // hide camera UI if blocked
             }}
           />
@@ -69,6 +68,15 @@ function App() {
           <img src={capturedImage} alt="Captured" />
         </div>
       )}
+      {errorMessage && (
+  <div className="error-modal">
+    <div className="error-box">
+      <p>{errorMessage}</p>
+      <button onClick={() => setErrorMessage("")}>Close</button>
+    </div>
+  </div>
+)}
+
     </div>
   );
 }
