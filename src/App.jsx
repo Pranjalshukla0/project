@@ -25,11 +25,12 @@ function App() {
   const [ocrText, setOcrText] = useState("");
   const [isOcrLoading, setIsOcrLoading] = useState(false);
 
- const videoConstraints = {
-  width: 720,
-  height: 960,
+const videoConstraints = {
+  width: 960,      // higher clarity than 720
+  height: 1280,
   facingMode: captureType === "selfie" ? "user" : "environment"
 };
+
 
 
   const capturePhoto = async () => {

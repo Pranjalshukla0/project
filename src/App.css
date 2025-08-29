@@ -47,26 +47,16 @@ button:hover {
   margin-top: 2rem;
 }
 
-/* Webcam (Live View) */
-.webcam {
-  width: 100%;
-  max-width: 360px;
-  height: auto;
-  border-radius: 8px;
-  object-fit: contain; /* prevents cropping */
-  display: block;
-  background: #000; /* optional: fills blank space */
-}
-
-/* Captured image (preview) */
+.webcam,
 .preview-container img {
   width: 100%;
-  max-width: 360px;
+  max-width: 400px;
   height: auto;
+  object-fit: contain;
   border-radius: 8px;
   display: block;
-  object-fit: contain; /* keeps full image visible */
 }
+
 
 
 
