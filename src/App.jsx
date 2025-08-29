@@ -3,6 +3,20 @@ import Webcam from "react-webcam";
 import "./App.css";
 import Tesseract from "tesseract.js";
 
+const aadhaarRegex = {
+  aadhaar: /\d{4}\s\d{4}\s\d{4}/,
+  dob: /(DOB|D\.O\.B\.|Year of Birth)[:\s]*\d{4}/i,
+  gender: /(MALE|FEMALE|TRANSGENDER)/i,
+  name: /^[A-Z][a-zA-Z ]+$/m
+};
+
+const panRegex = {
+  pan: /[A-Z]{5}[0-9]{4}[A-Z]{1}/,
+  dob: /\d{2}\/\d{2}\/\d{4}/,
+  name: /(?<=INCOME TAX DEPARTMENT\s)([A-Z ]+)/
+};
+
+
 function App() {
   const webcamRef = useRef(null);
   const [showCamera, setShowCamera] = useState(false);
@@ -35,9 +49,31 @@ const capturePhoto = async () => {
         logger: (m) => console.log(m),
       }
     ).then(({ data: { text } }) => {
-      setOcrText(text);
-      setIsOcrLoading(false);
-    }).catch(err => {
+  let extracted = "";
+  const upperText = text.toUpperCase();
+
+  if (upperText.includes("INCOME TAX") || panRegex.pan.test(upperText)) {
+    // PAN Card
+    const pan = panRegex.pan.exec(upperText)?.[0] || "Not found";
+    const dob = panRegex.dob.exec(upperText)?.[0] || "Not found";
+    const name = panRegex.name.exec(upperText)?.[1]?.trim() || "Not found";
+
+    extracted = `Document Type: PAN Card\nName: ${name}\nDOB: ${dob}\nPAN: ${pan}`;
+  } else if (aadhaarRegex.aadhaar.test(upperText)) {
+    // Aadhaar Card
+    const aadhaar = aadhaarRegex.aadhaar.exec(upperText)?.[0] || "Not found";
+    const dob = aadhaarRegex.dob.exec(upperText)?.[0] || "Not found";
+    const gender = aadhaarRegex.gender.exec(upperText)?.[0] || "Not found";
+    const name = upperText.split("\n").find(line => aadhaarRegex.name.test(line)) || "Not found";
+
+    extracted = `Document Type: Aadhaar Card\nName: ${name}\nDOB: ${dob}\nGender: ${gender}\nAadhaar No: ${aadhaar}`;
+  } else {
+    extracted = "Could not identify document type or extract data properly.";
+  }
+
+  setOcrText(extracted);
+  setIsOcrLoading(false);
+}).catch(err => {
       console.error("OCR error:", err);
       setOcrText("Failed to extract text.");
       setIsOcrLoading(false);
