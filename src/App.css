@@ -47,15 +47,6 @@ button:hover {
   margin-top: 2rem;
 }
 
-.webcam,
-.preview-container img {
-  width: 100%;
-  max-width: 480px; /* or go bigger like 540px */
-  aspect-ratio: 3 / 4; /* matches 960 x 1280 */
-  object-fit: cover; /* use 'cover' for cropped feel or 'contain' for full fit */
-  border-radius: 8px;
-  display: block;
-}
 
 
 
