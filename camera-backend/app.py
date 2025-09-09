@@ -8,49 +8,43 @@ from paddleocr import PaddleOCR
 app = Flask(__name__)
 CORS(app)
 
-ocr = PaddleOCR(use_angle_cls=True, lang='en')
+ocr = PaddleOCR(use_angle_cls=True, lang='en')  # Use use_textline_orientation in newer versions
 
 @app.route('/ocr', methods=['POST'])
 def extract_text():
     try:
         data = request.json
-        image_data = data['image']
+        image_data = data.get('image')
+
+        if not image_data:
+            return jsonify({"error": "No image provided"}), 400
 
         # Decode base64 image
         image_bytes = base64.b64decode(image_data)
         nparr = np.frombuffer(image_bytes, np.uint8)
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
-        # ✅ Preprocessing for better OCR
+        # Optional preprocessing
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        _, thresh = cv2.threshold(
-            gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU
-        )
-        resized = cv2.resize(
-            thresh, None, fx=2, fy=2, interpolation=cv2.INTER_LINEAR
-        )
+        _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        resized = cv2.resize(thresh, None, fx=2, fy=2, interpolation=cv2.INTER_LINEAR)
 
-        # ✅ Perform OCR
-        result = ocr.predict(resized)
+        # Run OCR (corrected)
+        result = ocr.ocr(resized, cls=True)
 
-        # Debug log
-        print("Raw OCR Result:", result)
-
-        if not result or len(result[0]) == 0:
+        if not result or not result[0]:
             return jsonify({"text": "No text found."})
 
-        # ✅ Extract text safely
         extracted_text = ""
-        for box in result[0]:
-            if isinstance(box, tuple) and len(box) >= 2:
-                extracted_text += box[1][0] + "\n"
+        for line in result[0]:
+            if isinstance(line, list) and len(line) >= 2:
+                extracted_text += line[1][0] + "\n"
 
         return jsonify({"text": extracted_text.strip()})
-
     except Exception as e:
-        print("🔥 OCR ERROR:", e)
+        print("OCR Error:", e)
         return jsonify({"error": str(e)}), 500
 
-
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))  # Use Render's port or default to 5000
+    app.run(host="0.0.0.0", port=port)
