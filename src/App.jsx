@@ -2,7 +2,7 @@ import React, { useRef, useState } from "react";
 import Webcam from "react-webcam";
 import "./App.css";
 import Tesseract from "tesseract.js";
-
+ import axios from "axios";
 const aadhaarRegex = {
   aadhaar: /\d{4}\s\d{4}\s\d{4}/,
   dob: /(DOB|D\.O\.B\.|Year of Birth)[:\s]*\d{4}/i,
@@ -31,64 +31,35 @@ function App() {
     facingMode: captureType === "selfie" ? "user" : "environment",
   };
 
-  const capturePhoto = async () => {
-    const imageSrc = webcamRef.current.getScreenshot();
-    setCapturedImage(imageSrc);
-    setShowCamera(false);
 
-    if (captureType === "document") {
-      setIsOcrLoading(true);
-      setOcrText("");
 
-      Tesseract.recognize(imageSrc, "eng+hin", {
-        logger: (m) => console.log(m),
-      })
-        .then(({ data: { text } }) => {
-          let extracted = "";
-          const upperText = text.toUpperCase();
+const capturePhoto = async () => {
+  const imageSrc = webcamRef.current.getScreenshot();
+  setCapturedImage(imageSrc);
+  setShowCamera(false);
 
-          // PAN Card
-          if (
-            upperText.includes("INCOME TAX") ||
-            panRegex.pan.test(upperText)
-          ) {
-            const name =
-              panRegex.name.exec(upperText)?.[1]?.trim() || "Not found";
-            const dob = panRegex.dob.exec(upperText)?.[0] || "Not found";
-            const pan = panRegex.pan.exec(upperText)?.[0] || "Not found";
-            extracted = `Document Type: PAN Card\nName: ${name}\nDOB: ${dob}\nPAN: ${pan}`;
-          }
-          // Aadhaar Card
-          else if (aadhaarRegex.aadhaar.test(upperText)) {
-            const lines = upperText
-              .split("\n")
-              .map((l) => l.trim())
-              .filter(Boolean);
-            const nameLine =
-              lines.find((line) => aadhaarRegex.name.test(line)) || "Not found";
-            const dob = aadhaarRegex.dob.exec(upperText)?.[0] || "Not found";
-            const gender =
-              aadhaarRegex.gender.exec(upperText)?.[0] || "Not found";
-            const aadhaar =
-              aadhaarRegex.aadhaar.exec(upperText)?.[0] || "Not found";
-            extracted = `Document Type: Aadhaar Card\nName: ${nameLine}\nDOB: ${dob}\nGender: ${gender}\nAadhaar No: ${aadhaar}`;
-          }
-          // Unknown
-          else {
-            extracted =
-              "Could not identify document type or extract data properly.";
-          }
+  if (captureType === "document") {
+    setIsOcrLoading(true);
+    setOcrText("");
 
-          setOcrText(extracted);
-          setIsOcrLoading(false);
-        })
-        .catch((err) => {
-          console.error("OCR error:", err);
-          setOcrText("Failed to extract text.");
-          setIsOcrLoading(false);
-        });
+    try {
+      const base64Data = imageSrc.replace(/^data:image\/png;base64,/, "");
+
+      const response = await axios.post("http://127.0.0.1:5000/ocr", {
+        image: base64Data,
+      });
+
+      setOcrText(response.data.text || "No text found.");
+   } catch (err) {
+  console.error("OCR error:", err);
+  setOcrText("Error: " + (err?.response?.data?.error || "Failed to extract text."));
+}
+ finally {
+      setIsOcrLoading(false);
     }
-  };
+  }
+};
+
 
   const handleButtonClick = (type) => {
     setCaptureType(type);
@@ -105,6 +76,36 @@ function App() {
         </button>
         <button onClick={() => handleButtonClick("selfie")}>Selfie</button>
       </div>
+    <input
+  type="file"
+  accept="image/*"
+  onChange={(e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const imageSrc = reader.result;
+        setCapturedImage(imageSrc);
+        setOcrText("");
+        setIsOcrLoading(true);
+
+        try {
+          const base64Data = imageSrc.replace(/^data:image\/(png|jpeg|jpg);base64,/, "");
+          const response = await axios.post("http://127.0.0.1:5000/ocr", {
+            image: base64Data,
+          });
+          setOcrText(response.data.text || "No text found.");
+        } catch (err) {
+          console.error("OCR error:", err);
+          setOcrText("Error: " + (err?.response?.data?.error || "Failed to extract text."));
+        } finally {
+          setIsOcrLoading(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  }}
+/>
 
       {showCamera && (
         <div className="camera-container">
