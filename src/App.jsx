@@ -61,6 +61,8 @@ function App() {
 
   const capturePhoto = async () => {
     const imageSrc = webcamRef.current.getScreenshot();
+    console.log("Captured Base64 Image:", imageSrc);
+
     setCapturedImage(imageSrc);
     setShowCamera(false);
 
