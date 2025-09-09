@@ -99,7 +99,7 @@ function App() {
         <button onClick={() => handleButtonClick("document")}>Verify Document</button>
         <button onClick={() => handleButtonClick("selfie")}>Selfie</button>
       </div>
-
+{/* 
       <input
         type="file"
         accept="image/*"
@@ -115,7 +115,7 @@ function App() {
             reader.readAsDataURL(file);
           }
         }}
-      />
+      /> */}
 
       {showCamera && (
         <div className="camera-container">
