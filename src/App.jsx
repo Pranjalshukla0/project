@@ -4,12 +4,19 @@ import Tesseract from "tesseract.js";
 import "./App.css";
 
 // Regex patterns for Aadhaar and PAN
+// const aadhaarRegex = {
+//   aadhaar: /\d{4}\s\d{4}\s\d{4}/,
+//   dob: /(DOB|D\.O\.B\.|Year of Birth)[:\s]*\d{4}/i,
+//   gender: /(MALE|FEMALE|TRANSGENDER)/i,
+//   name: /^[A-Z][A-Z ]{3,}$/m,
+// };
 const aadhaarRegex = {
   aadhaar: /\d{4}\s\d{4}\s\d{4}/,
-  dob: /(DOB|D\.O\.B\.|Year of Birth)[:\s]*\d{4}/i,
-  gender: /(MALE|FEMALE|TRANSGENDER)/i,
-  name: /^[A-Z][A-Z ]{3,}$/m,
+  dob: /(?:DOB|D\.O\.B\.|Year of Birth)[\s:]*([0-9]{2}\/[0-9]{2}\/[0-9]{4}|[0-9]{4})/i,
+  gender: /\b(MALE|FEMALE|TRANSGENDER)\b/i,
+  name: /^[A-Z]{3,}(?: [A-Z]{2,}){0,2}$/gm,
 };
+
 
 const panRegex = {
   pan: /[A-Z]{5}[0-9]{4}[A-Z]{1}/,
@@ -32,26 +39,57 @@ function App() {
     facingMode: captureType === "selfie" ? "user" : "environment",
   };
 
- const parseDocumentDetails = (text) => {
+//  const parseDocumentDetails = (text) => {
+//   const aadhaar = aadhaarRegex.aadhaar.test(text);
+//   const pan = panRegex.pan.test(text);
+
+//   if (aadhaar) {
+//     return {
+//       type: "Aadhaar",
+//       aadhaarNumber: text.match(aadhaarRegex.aadhaar)?.[0],
+//       dob: text.match(aadhaarRegex.dob)?.[0],
+//       gender: text.match(aadhaarRegex.gender)?.[0],
+//       name: text.match(aadhaarRegex.name)?.[0],
+//       mobile: text.match(aadhaarRegex.mobile)?.[0],
+//     };
+//   } else if (pan) {
+//     return {
+//       type: "PAN",
+//       panNumber: text.match(panRegex.pan)?.[0],
+//       dob: text.match(panRegex.dob)?.[0],
+//       name: text.match(panRegex.name)?.[1]?.trim(),
+//       mobile: text.match(panRegex.mobile)?.[0],
+//     };
+//   } else {
+//     return { type: "Unknown", raw: text };
+//   }
+// };
+
+const parseDocumentDetails = (text) => {
   const aadhaar = aadhaarRegex.aadhaar.test(text);
   const pan = panRegex.pan.test(text);
+
+  const mobileMatch = text.match(/(?:\bMobile\b.*?)(\+91[\-\s]?[6-9]\d{9}|[6-9]\d{9})/i);
+  const nameMatch =
+    text.match(/(?:Name|नाम)[\s:]*([A-Z][A-Z\s]{2,})/) ||
+    text.match(/^[A-Z][A-Z\s]{2,}$/m);
 
   if (aadhaar) {
     return {
       type: "Aadhaar",
-      aadhaarNumber: text.match(aadhaarRegex.aadhaar)?.[0],
-      dob: text.match(aadhaarRegex.dob)?.[0],
-      gender: text.match(aadhaarRegex.gender)?.[0],
-      name: text.match(aadhaarRegex.name)?.[0],
-      mobile: text.match(aadhaarRegex.mobile)?.[0],
+      aadhaarNumber: text.match(aadhaarRegex.aadhaar)?.[0] || "",
+      dob: text.match(aadhaarRegex.dob)?.[1] || "",
+      gender: text.match(aadhaarRegex.gender)?.[1] || "",
+      name: nameMatch?.[1]?.trim() || nameMatch?.[0]?.trim() || "",
+      mobile: mobileMatch?.[1]?.trim() || "",
     };
   } else if (pan) {
     return {
       type: "PAN",
-      panNumber: text.match(panRegex.pan)?.[0],
-      dob: text.match(panRegex.dob)?.[0],
-      name: text.match(panRegex.name)?.[1]?.trim(),
-      mobile: text.match(panRegex.mobile)?.[0],
+      panNumber: text.match(panRegex.pan)?.[0] || "",
+      dob: text.match(panRegex.dob)?.[0] || "",
+      name: text.match(panRegex.name)?.[1]?.trim() || "",
+      mobile: mobileMatch?.[1]?.trim() || "",
     };
   } else {
     return { type: "Unknown", raw: text };
@@ -78,7 +116,7 @@ function App() {
     try {
       const {
         data: { text },
-      } = await Tesseract.recognize(imageSrc, "eng", {
+      } = await Tesseract.recognize(imageSrc, "eng+hin", {
         logger: (m) => console.log(m),
       });
 
@@ -144,16 +182,30 @@ function App() {
             <p>Processing...</p>
           ) : (
             <>
-              {/* <textarea
+              <textarea
                 value={ocrText}
                 readOnly
                 rows={10}
                 style={{ width: "100%", maxWidth: "500px" }}
-              /> */}
-              <h4>Detected Document Details:</h4>
-              <pre style={{ background: "black", padding: "10px", borderRadius: "5px" }}>
-                {JSON.stringify(parseDocumentDetails(ocrText), null, 2)}
-              </pre>
+              />
+<h4>Detected Document Details:</h4>
+<div style={{ background: "#111", padding: "15px", borderRadius: "8px", color: "#fff", textAlign: "left", maxWidth: "500px" }}>
+  {(() => {
+    const details = parseDocumentDetails(ocrText);
+    return (
+      <>
+        <p><strong>Type:</strong> {details.type}</p>
+        {details.aadhaarNumber && <p><strong>Aadhaar No:</strong> {details.aadhaarNumber}</p>}
+        {details.panNumber && <p><strong>PAN No:</strong> {details.panNumber}</p>}
+        {details.name && <p><strong>Name:</strong> {details.name}</p>}
+        {details.dob && <p><strong>DOB:</strong> {details.dob}</p>}
+        {details.gender && <p><strong>Gender:</strong> {details.gender}</p>}
+        {details.mobile && <p><strong>Mobile:</strong> {details.mobile}</p>}
+      </>
+    );
+  })()}
+</div>
+
             </>
           )}
         </div>
