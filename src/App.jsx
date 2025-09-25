@@ -1,7 +1,7 @@
 import React, { useRef, useState } from "react";
 import Webcam from "react-webcam";
+import Tesseract from "tesseract.js";
 import "./App.css";
-import axios from "axios";
 
 // Regex patterns for Aadhaar and PAN
 const aadhaarRegex = {
@@ -16,9 +16,6 @@ const panRegex = {
   dob: /\d{2}\/\d{2}\/\d{4}/,
   name: /(?<=INCOME TAX DEPARTMENT\s)([A-Z ]+)/,
 };
-
-// 🔧 Use env var for backend URL
-const BASE_URL = "https://backend-pq9z.onrender.com";
 
 function App() {
   const webcamRef = useRef(null);
@@ -76,13 +73,17 @@ function App() {
     setOcrText("");
 
     try {
-      const base64Data = imageSrc.replace(/^data:image\/(png|jpeg|jpg);base64,/, "");
-      const response = await axios.post(`${BASE_URL}/ocr`, { image: base64Data });
-      const text = response.data.text || "No text found.";
+      const {
+        data: { text },
+      } = await Tesseract.recognize(imageSrc, "eng", {
+        logger: (m) => console.log(m),
+      });
+
+      console.log("Extracted text:", text);
       setOcrText(text);
     } catch (err) {
-      console.error("OCR error:", err);
-      setOcrText("Error: " + (err?.response?.data?.error || "Failed to extract text."));
+      console.error("Tesseract OCR error:", err);
+      setOcrText("Error: Failed to extract text.");
     } finally {
       setIsOcrLoading(false);
     }
@@ -96,28 +97,11 @@ function App() {
 
   return (
     <div className="App">
-      <h1>Document OCR Capture</h1>
+      <h1>Document OCR Capture (Client-Side)</h1>
       <div className="button-container">
         <button onClick={() => handleButtonClick("document")}>Verify Document</button>
         <button onClick={() => handleButtonClick("selfie")}>Selfie</button>
       </div>
-{/* 
-      <input
-        type="file"
-        accept="image/*"
-        onChange={(e) => {
-          const file = e.target.files[0];
-          if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-              const imageSrc = reader.result;
-              setCapturedImage(imageSrc);
-              handleOCR(imageSrc);
-            };
-            reader.readAsDataURL(file);
-          }
-        }}
-      /> */}
 
       {showCamera && (
         <div className="camera-container">
