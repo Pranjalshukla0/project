@@ -32,29 +32,32 @@ function App() {
     facingMode: captureType === "selfie" ? "user" : "environment",
   };
 
-  const parseDocumentDetails = (text) => {
-    const aadhaar = aadhaarRegex.aadhaar.test(text);
-    const pan = panRegex.pan.test(text);
+ const parseDocumentDetails = (text) => {
+  const aadhaar = aadhaarRegex.aadhaar.test(text);
+  const pan = panRegex.pan.test(text);
 
-    if (aadhaar) {
-      return {
-        type: "Aadhaar",
-        aadhaarNumber: text.match(aadhaarRegex.aadhaar)?.[0],
-        dob: text.match(aadhaarRegex.dob)?.[0],
-        gender: text.match(aadhaarRegex.gender)?.[0],
-        name: text.match(aadhaarRegex.name)?.[0],
-      };
-    } else if (pan) {
-      return {
-        type: "PAN",
-        panNumber: text.match(panRegex.pan)?.[0],
-        dob: text.match(panRegex.dob)?.[0],
-        name: text.match(panRegex.name)?.[1]?.trim(),
-      };
-    } else {
-      return { type: "Unknown", raw: text };
-    }
-  };
+  if (aadhaar) {
+    return {
+      type: "Aadhaar",
+      aadhaarNumber: text.match(aadhaarRegex.aadhaar)?.[0],
+      dob: text.match(aadhaarRegex.dob)?.[0],
+      gender: text.match(aadhaarRegex.gender)?.[0],
+      name: text.match(aadhaarRegex.name)?.[0],
+      mobile: text.match(aadhaarRegex.mobile)?.[0],
+    };
+  } else if (pan) {
+    return {
+      type: "PAN",
+      panNumber: text.match(panRegex.pan)?.[0],
+      dob: text.match(panRegex.dob)?.[0],
+      name: text.match(panRegex.name)?.[1]?.trim(),
+      mobile: text.match(panRegex.mobile)?.[0],
+    };
+  } else {
+    return { type: "Unknown", raw: text };
+  }
+};
+
 
   const capturePhoto = async () => {
     const imageSrc = webcamRef.current.getScreenshot();
@@ -141,12 +144,12 @@ function App() {
             <p>Processing...</p>
           ) : (
             <>
-              <textarea
+              {/* <textarea
                 value={ocrText}
                 readOnly
                 rows={10}
                 style={{ width: "100%", maxWidth: "500px" }}
-              />
+              /> */}
               <h4>Detected Document Details:</h4>
               <pre style={{ background: "black", padding: "10px", borderRadius: "5px" }}>
                 {JSON.stringify(parseDocumentDetails(ocrText), null, 2)}
