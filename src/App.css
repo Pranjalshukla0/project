@@ -98,3 +98,7 @@ button:hover {
   resize: vertical;
   font-family: monospace;
 }
+.ocr-output{
+  background-color: #222;
+  color: white;
+}

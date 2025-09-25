@@ -148,7 +148,7 @@ function App() {
                 style={{ width: "100%", maxWidth: "500px" }}
               />
               <h4>Detected Document Details:</h4>
-              <pre style={{ background: "#eee", padding: "10px", borderRadius: "5px" }}>
+              <pre style={{ background: "black", padding: "10px", borderRadius: "5px" }}>
                 {JSON.stringify(parseDocumentDetails(ocrText), null, 2)}
               </pre>
             </>
