@@ -225,6 +225,225 @@
 
 // export default App;
 
+
+// face detection also 
+// import React, { useRef, useState, useEffect } from "react";
+// import Webcam from "react-webcam";
+// import * as faceapi from "face-api.js";
+// import "./App.css";
+
+// function App() {
+//   const webcamRef = useRef(null);
+//   const [showCamera, setShowCamera] = useState(false);
+//   const [captureType, setCaptureType] = useState("");
+//   const [capturedImage, setCapturedImage] = useState(null);
+//   const [errorMessage, setErrorMessage] = useState("");
+//   const [ocrText, setOcrText] = useState("");
+//   const [isOcrLoading, setIsOcrLoading] = useState(false);
+//   const [faceComparisonResult, setFaceComparisonResult] = useState("");
+
+//   const videoConstraints = {
+//     width: { ideal: 1920 },
+//     height: { ideal: 1080 },
+//     facingMode: captureType === "selfie" ? "user" : "environment",
+//   };
+
+//   useEffect(() => {
+//     // Load face-api.js models
+//     const loadModels = async () => {
+//       await faceapi.nets.ssdMobilenetv1.loadFromUri("/models");
+//       await faceapi.nets.faceLandmark68Net.loadFromUri("/models");
+//       await faceapi.nets.faceRecognitionNet.loadFromUri("/models");
+//       console.log("Face API models loaded");
+//     };
+
+//     loadModels();
+//   }, []);
+
+//   const handleButtonClick = (type) => {
+//     setCaptureType(type);
+//     setShowCamera(true);
+//     setCapturedImage(null);
+//   };
+
+//   const capturePhoto = async () => {
+//     const imageSrc = webcamRef.current.getScreenshot();
+//     setCapturedImage(imageSrc);
+//     setShowCamera(false);
+
+//     if (captureType === "document") {
+//       await handleOCR(imageSrc);
+//     }
+
+//     // Compare faces if both selfie and Aadhaar card images are captured
+//     if (captureType === "selfie" && capturedImage) {
+//       await compareFaces(imageSrc, capturedImage);
+//     }
+//   };
+
+//   const delay = (ms) => new Promise((res) => setTimeout(res, ms));
+
+//   const handleOCR = async (imageSrc) => {
+//     setIsOcrLoading(true);
+//     setOcrText("");
+
+//     const base64Data = imageSrc.replace(/^data:image\/(png|jpeg|jpg);base64,/, "");
+//     console.log(base64Data);
+//     let attempts = 0;
+//     let result = null;
+
+//     while (attempts < 3) {
+//       try {
+//         const response = await fetch("http://164.52.217.44:8007/api/aadhar_data_extract/", {
+//           method: "POST",
+//           headers: { "Content-Type": "application/json" },
+//           body: JSON.stringify({ base64_data: base64Data }),
+//         });
+
+//         result = await response.json();
+
+//         if (result?.name || result?.aadhaar_number) break; // got usable response
+//       } catch (err) {
+//         console.error("Attempt failed:", err);
+//       }
+
+//       attempts++;
+//       await delay(2000); // wait 2 seconds before retry
+//     }
+
+//     if (result) {
+//       console.log("Final OCR result:", result);
+//       setOcrText(JSON.stringify(result, null, 2));
+//     } else {
+//       setOcrText("⚠️ Failed to get proper response from OCR API.");
+//     }
+
+//     setIsOcrLoading(false);
+//   };
+
+//   // Function to compare faces
+//   const compareFaces = async (selfieImageSrc, aadhaarImageSrc) => {
+//     const selfieImage = await faceapi.bufferToImage(selfieImageSrc);
+//     const aadhaarImage = await faceapi.bufferToImage(aadhaarImageSrc);
+
+//     // Detect faces in both images
+//     const selfieDetect = await faceapi.detectSingleFace(selfieImage).withFaceLandmarks().withFaceDescriptor();
+//     const aadhaarDetect = await faceapi.detectSingleFace(aadhaarImage).withFaceLandmarks().withFaceDescriptor();
+
+//     if (!selfieDetect || !aadhaarDetect) {
+//       setFaceComparisonResult("No face detected in one or both images.");
+//       return;
+//     }
+
+//     // Compare the face descriptors
+//     const distance = faceapi.euclideanDistance(selfieDetect.descriptor, aadhaarDetect.descriptor);
+
+//     if (distance < 0.6) {
+//       setFaceComparisonResult("Faces match!");
+//     } else {
+//       setFaceComparisonResult("Faces do not match.");
+//     }
+//   };
+
+//   return (
+//     <div className="App">
+//       <h1>Document OCR Capture (via Aadhaar OCR API)</h1>
+//       <div className="button-container">
+//         <button onClick={() => handleButtonClick("document")}>Verify Document</button>
+//         <button onClick={() => handleButtonClick("selfie")}>Selfie</button>
+//       </div>
+
+//       {showCamera && (
+//         <div className="camera-container">
+//           <Webcam
+//             audio={false}
+//             ref={webcamRef}
+//             screenshotFormat="image/png"
+//             width={540}
+//             height={380}
+//             className="webcam"
+//             playsInline
+//             videoConstraints={videoConstraints}
+//             mirrored={captureType === "selfie"}
+//             onUserMediaError={(err) => {
+//               console.error("Camera access denied:", err);
+//               setErrorMessage("Camera permission was denied. Please allow access to use this feature.");
+//               setShowCamera(false);
+//             }}
+//           />
+//           <button className="capture-btn" onClick={capturePhoto}>
+//             Capture {captureType}
+//           </button>
+//         </div>
+//       )}
+
+//       {capturedImage && (
+//         <div className="preview-container">
+//           <h3>Captured {captureType}</h3>
+//           <img src={capturedImage} alt="Captured" />
+//         </div>
+//       )}
+
+//       {captureType === "document" && capturedImage && (
+//         <div className="ocr-output">
+//           <h3>Extracted Text:</h3>
+//           {isOcrLoading ? (
+//             <p>Processing...</p>
+//           ) : (
+//             <>
+//               <textarea
+//                 value={ocrText}
+//                 readOnly
+//                 rows={10}
+//                 style={{ width: "100%", maxWidth: "500px" }}
+//               />
+//               <h4>Detected Aadhaar Details:</h4>
+//               <div style={{ background: "#111", padding: "15px", borderRadius: "8px", color: "#fff", textAlign: "left", maxWidth: "500px" }}>
+//                 {(() => {
+//                   try {
+//                     const parsed = JSON.parse(ocrText);
+//                     return (
+//                       <>
+//                         <p><strong>Name:</strong> {parsed.name || "Not Found"}</p>
+//                         <p><strong>DOB:</strong> {parsed.dob || "Not Found"}</p>
+//                         <p><strong>Gender:</strong> {parsed.gender || "Not Found"}</p>
+//                         <p><strong>Aadhaar No:</strong> {parsed.aadhaar_number || "Not Found"}</p>
+//                         <p><strong>Mobile:</strong> {parsed.mobile || "Not Found"}</p>
+//                       </>
+//                     );
+//                   } catch (e) {
+//                     return <p>⚠️ Failed to parse API response.</p>;
+//                   }
+//                 })()}
+//               </div>
+//             </>
+//           )}
+//         </div>
+//       )}
+
+//       {faceComparisonResult && (
+//         <div className="comparison-result">
+//           <h3>Face Comparison Result: {faceComparisonResult}</h3>
+//         </div>
+//       )}
+
+//       {errorMessage && (
+//         <div className="error-modal">
+//           <div className="error-box">
+//             <p>{errorMessage}</p>
+//             <button onClick={() => setErrorMessage("")}>Close</button>
+//           </div>
+//         </div>
+//       )}
+//     </div>
+//   );
+// }
+
+// export default App;
+
+
+
+
 import React, { useRef, useState } from "react";
 import Webcam from "react-webcam";
 import "./App.css";
@@ -267,7 +486,7 @@ const handleOCR = async (imageSrc) => {
   setOcrText("");
 
   const base64Data = imageSrc.replace(/^data:image\/(png|jpeg|jpg);base64,/, "");
-
+ console.log(base64Data)
   let attempts = 0;
   let result = null;
 
@@ -353,25 +572,45 @@ const handleOCR = async (imageSrc) => {
                 rows={10}
                 style={{ width: "100%", maxWidth: "500px" }}
               />
-              <h4>Detected Aadhaar Details:</h4>
-              <div style={{ background: "#111", padding: "15px", borderRadius: "8px", color: "#fff", textAlign: "left", maxWidth: "500px" }}>
-                {(() => {
-                  try {
-                    const parsed = JSON.parse(ocrText);
-                    return (
-                      <>
-                        <p><strong>Name:</strong> {parsed.name || "Not Found"}</p>
-                        <p><strong>DOB:</strong> {parsed.dob || "Not Found"}</p>
-                        <p><strong>Gender:</strong> {parsed.gender || "Not Found"}</p>
-                        <p><strong>Aadhaar No:</strong> {parsed.aadhaar_number || "Not Found"}</p>
-                        <p><strong>Mobile:</strong> {parsed.mobile || "Not Found"}</p>
-                      </>
-                    );
-                  } catch (e) {
-                    return <p>⚠️ Failed to parse API response.</p>;
-                  }
-                })()}
-              </div>
+             <h4>Detected Aadhaar Details:</h4>
+<div
+  style={{
+    background: "#111",
+    padding: "15px",
+    borderRadius: "8px",
+    color: "#fff",
+    textAlign: "left",
+    maxWidth: "500px",
+  }}
+>
+  {(() => {
+    try {
+      const parsed = JSON.parse(ocrText);
+      const message = parsed.message || "";
+
+      const name = message.match(/\*\*Name:\*\*\s*(.+)/)?.[1]?.trim();
+      const dob = message.match(/\*\*Date of Birth:\*\*\s*(.+)/)?.[1]?.trim();
+      const aadhaar = message.match(/\*\*Aadhar Number:\*\*\s*(.+)/)?.[1]?.trim();
+      const gender = message.match(/\*\*Gender:\*\*\s*(.+)/)?.[1]?.trim();
+      const mobile = message.match(/\*\*Mobile:\*\*\s*(.+)/)?.[1]?.trim();
+      const accuracy = message.match(/\*\*Extraction Accuracy:\*\*\s*(.+)/)?.[1]?.trim();
+
+      return (
+        <>
+          <p><strong>Name:</strong> {name || "Not Found"}</p>
+          <p><strong>DOB:</strong> {dob || "Not Found"}</p>
+          <p><strong>Gender:</strong> {gender || "Not Found"}</p>
+          <p><strong>Aadhaar No:</strong> {aadhaar || "Not Found"}</p>
+          <p><strong>Mobile:</strong> {mobile || "Not Found"}</p>
+          <p><strong>Accuracy:</strong> {accuracy || "Not Found"}</p>
+        </>
+      );
+    } catch (e) {
+      return <p>⚠️ Failed to parse API response.</p>;
+    }
+  })()}
+</div>
+
             </>
           )}
         </div>
